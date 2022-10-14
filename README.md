@@ -25,7 +25,7 @@ Generate caddyfile with c2 malleable profiles
 ### Quick start
 - Generate self-signed certificate
 - Copy your C2 profile into RedCaddy
-- Add your redirect rules into files (E.g chains.list)
+- Add your redirect rules into files (E.g [chains.list](https://github.com/XiaoliChan/RedCaddy/blob/main/chains.list))
 - Finally, generate Caddyfile with the ugly python script.
 
 ### Step by step
