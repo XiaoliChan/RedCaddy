@@ -14,16 +14,20 @@ Generate caddyfile with c2 malleable profiles
 
 ### Feature
 - Block IP by GEOIP country
-- Block requests with header matcher
+- Allow requests by header matcher
 - User-agent & IP blacklist
 - Support multiple redirection
 - TeamServer port warden
 
 ### Note
-- **The "redwarden_parser.py" under modules is from [RedWarden](https://github.com/mgeeky/RedWarden) by [mgeeky](https://github.com/mgeeky)**
+- **The "redwarden_parser.py" under modules is from [RedWarden](https://github.com/mgeeky/RedWarden) by [mgeeky](https://github.com/mgeeky)**  
+- Plenty of inspiration from this article: [🇬🇧 Carrying the Tortellini's golf sticks](https://aptw.tf/2021/11/25/c2-redirectors-using-caddy.html)  
+- IP Blacklists from [RedGuard's IP Blacklists](https://github.com/wikiZ/RedGuard/blob/main/data/banned_ips.go)
+- User-Agent Blacklists from [mitchellkrogza's UA blacklists](https://github.com/mitchellkrogza/nginx-ultimate-bad-bot-blocker/blob/master/_generator_lists/bad-user-agents.list)  
 
 ### Quick start
 - Generate self-signed certificate
+- **Make sure `set trust_x_forwarded_for "true";` already enabled in profile**
 - Copy your C2 profile into RedCaddy
 - Add your redirect rules into files (E.g [chains.list](https://github.com/XiaoliChan/RedCaddy/blob/main/chains.list))
 - Finally, generate Caddyfile with the ugly python script.
@@ -43,9 +47,10 @@ Generate caddyfile with c2 malleable profiles
 3433:https:192.168.85.133:10004
 ```
 - **Q: What is "warden"?**  
-A: Warden is a whitelist function to protect your teamserver port, this will generate a random link with random secure strings. The user without the ability to connect to teamserver before trigged it ("warden" behind 443 means handling the link on port 443).
+A: Warden is a whitelist function feature to protect your teamserver port, this will generate a random link with random secure strings. The user without the ability to connect to teamserver before trigged it ("warden" behind 443 means handling the link on port 443).
 
 - Pass arguments the generator.py needed, then hit enter.  
+`python generator.py -f jquery-c2.4.3.profile -l [Ethernet Interface IP Address] -r chains.list -c CN -o Caddyfile`
 ![image](https://user-images.githubusercontent.com/30458572/195813570-bb067849-e606-4a8f-b2e6-595ff0321aa0.png)
 
 - Run caddy with caddyfile which is generated :)  
@@ -56,7 +61,7 @@ A: Warden is a whitelist function to protect your teamserver port, this will gen
 A: Sorry, I don't know how to write caddyfile in json/yaml format.
 
 - **Q: Can response 404 with unmatch routes?**  
-A: Well, caddy can't do this ¯\_(ツ)_/¯.
+A: Well, caddy can't do this ¯\\_(ツ)_/¯.
 
 ### Reference
 - [Malleable C2 Profile parser](https://github.com/mgeeky/RedWarden/blob/master/plugins/malleable_redirector.py)  

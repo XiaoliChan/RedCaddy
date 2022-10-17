@@ -8,14 +8,14 @@ from modules.redwarden_parser import MalleableParser
 from modules.logger import logger
 
 class caddy_Proxy:
-    def __init__(self, profile, local, chains, filename, geo_country, scf):
+    def __init__(self, profile, local, chains, filename, geo_country, xf):
         self.__profile = profile
         # Redirect destination, only https
         self.__local = local
         self.__chains = chains
         self.__outfile = filename
         self.__country = geo_country
-        self.__scf_switch = scf
+        self.__xf_switch = xf
 
     def wrapper(self):
         # Load module and profile
@@ -91,7 +91,7 @@ class caddy_Proxy:
     }
 }
  
-'''
+'''.replace("REPLEACE_ME",self.__country)
             full_Block = geoip_Block + full_Block
         
         self.generate_Caddyfile(full_Block)
@@ -130,7 +130,7 @@ class caddy_Proxy:
         matcher_tmp = "{" + "\r\n\t" + format_URI + "\r\n\t" + method + "\r\n\t" + format_Headers.strip("\t") + "}"
         matcher_Full = matcher_Name + matcher_tmp
 
-        if self.__scf_switch == True:
+        if self.__xf_switch == True:
             print("[+] SCF feature: Selecting x-forwarded-for header ip as source ip addr")
             reverse_proxy_Partly = reverse_proxy_Partly.replace(r"#scf ",'')
         else:
@@ -145,10 +145,9 @@ class caddy_Proxy:
         tag = "(caddy-guard-%s)"%str(chain.strip("\n").split(":")[3])
         template_Header = r''' {
 	tls ./localhost.crt ./localhost.key
-
+	import basic-security
 	handle /* {
 		import basic-blacklist
-		import basic-remove
 		# GEO_IMPORT
 '''
         template_End = r'''
@@ -235,11 +234,20 @@ Invoke-WebRequest https://[REPLEACE_TO_YOUR_VPS_IP]:REPLEACE_A/REPLEACE_C -Heade
         order cgi last
     }
 
-    (basic-remove) {
+    (basic-security) {
         header {
-            -Server
-            -Link
-            -X-Powered-By
+		Server "Apache/2.4.50 (Unix) OpenSSL/1.1.1d"
+		X-Robots-Tag "noindex, nofollow, nosnippet, noarchive"
+		X-Content-Type-Options "nosniff"
+		Permissions-Policy interest-cohort=()
+		Strict-Transport-Security max-age=31536000;
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer-when-downgrade
+		Cache-Control no-cache
+		X-Powered-By
+		X-Page-Speed
+		X-Varnish
         }
     }
 
@@ -264,7 +272,7 @@ Invoke-WebRequest https://[REPLEACE_TO_YOUR_VPS_IP]:REPLEACE_A/REPLEACE_C -Heade
     }
 
     '''
-
+    
         with open(self.__outfile,'w+') as f:
             f.write(caddyguard_Header + full_Block)
 
@@ -287,8 +295,8 @@ if __name__ == '__main__':
     parser.add_argument('-r','-redir-chain', metavar="file" ,action='store', help='Redirect chain files, format: [caddy-port]:[https]:[C2 Host]:[C2 Port] '
                         'E.g.: "443:https:127.0.0.1:8443:warden:50050"')
     parser.add_argument('-c', '-allow-country', metavar="CN" ,action='store', help='Whitelist IP with country (detect with GEOIP database) '
-                        'For multiple country please separated by a single space, Like: "CN US"')
-    parser.add_argument('-scf', action='store_true', help='Using with tencent serverless cloud function(scf) '
+                        'For multiple country please separated by a single space, Like: CN US')
+    parser.add_argument('-xf', action='store_true', help='Using x-forwarded-for header ip address as remote ip'
                         ',the scf must include x-forwarded-for header')
     parser.add_argument('-o', '-out', metavar="filename" ,action='store', help='Filename you want to save as')
     
@@ -311,5 +319,5 @@ if __name__ == '__main__':
         logger.err("[-] Please output output destination")
         sys.exit(1)
 
-    executer = caddy_Proxy(options.f, options.l, options.r, options.o, options.c, options.scf)
+    executer = caddy_Proxy(options.f, options.l, options.r, options.o, options.c, options.xf)
     executer.wrapper()
