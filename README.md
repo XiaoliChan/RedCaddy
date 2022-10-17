@@ -27,7 +27,8 @@ Generate caddyfile with c2 malleable profiles
 
 ### Quick start
 - Generate self-signed certificate
-- **Make sure `set trust_x_forwarded_for "true";` already enabled in profile**
+- Build the custom caddy with specific modules (optional)
+- **Make sure `set trust_x_forwarded_for "true";` already enabled in c2 profile**
 - Copy your C2 profile into RedCaddy
 - Add your redirect rules into files (E.g [chains.list](https://github.com/XiaoliChan/RedCaddy/blob/main/chains.list))
 - Finally, generate Caddyfile with the ugly python script.
@@ -35,6 +36,18 @@ Generate caddyfile with c2 malleable profiles
 ### Step by step
 - Generate self-signed certificates from this page:  
 [How to create self-signed certificates](https://gist.github.com/cecilemuller/9492b848eb8fe46d462abeb26656c4f8)
+
+- Build the custom caddy with specific modules (optional)  
+```
+wget https://github.com/caddyserver/xcaddy/releases/download/v0.3.1/xcaddy_0.3.1_linux_amd64.tar.gz
+tar -zxvf xcaddy_0.3.1_linux_amd64.tar.gz
+./xcaddy build \
+    --with github.com/aksdb/caddy-cgi/v2 \
+    --with github.com/porech/caddy-maxmind-geolocation
+```
+
+- Enable `set trust_x_forwarded_for "true";` in c2 profile  
+![image](https://user-images.githubusercontent.com/30458572/196095882-c60f306c-b11d-4642-af0c-86779200b3d3.png)
 
 - Copy the C2 profile into RedCaddy, in this case, I use [threatexpress‘s jquery-c2.4.3.profile](https://github.com/threatexpress/malleable-c2/blob/master/jquery-c2.4.3.profile) as demo  
 ![image](https://user-images.githubusercontent.com/30458572/195805856-bb7e5352-6227-42df-92da-7682511cc7c1.png)
