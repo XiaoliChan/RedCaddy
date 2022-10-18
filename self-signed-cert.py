@@ -26,7 +26,7 @@ def CarbonCopy(host, port, alt_names):
     ogcert = ssl.get_server_certificate((host, int(port)))
     x509 = crypto.load_certificate(crypto.FILETYPE_PEM, ogcert)
 
-    certDir = Path('certs')
+    certDir = Path('.')
     certDir.mkdir(exist_ok=True)
 
     #Creating Fake Certificate
