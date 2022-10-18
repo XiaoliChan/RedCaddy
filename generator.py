@@ -46,8 +46,6 @@ class caddy_Proxy:
 
             # Generate reverse proxy blocks
             tmp_Block = ""
-            host_HeaderTMP = []
-            host_HeaderNoDUP = []
             for select in selection:
                 for variant in test_Parser.config[select].keys():
                     try:
@@ -61,17 +59,12 @@ class caddy_Proxy:
                             uri = test_Parser.config[select][variant]['uri']
                             method = test_Parser.config[select][variant]['verb']
                         headers = test_Parser.config[select][variant]['client']['header']
-                        caddy_Block, host = self.generate_ReverseProxy(uri, user_agent, headers, method, select, variant, c2_backend)
-                        # Remove blank stuff
-                        if host != '':
-                            host_HeaderTMP.append(host + ":" + chain.strip("\n").split(":")[0])
+                        caddy_Block = self.generate_ReverseProxy(uri, user_agent, headers, method, select, variant, c2_backend)
                         tmp_Block = tmp_Block + "\r\n\r\n" + caddy_Block
                     except:
                         pass
-            [host_HeaderNoDUP.append(i) for i in host_HeaderTMP if i not in host_HeaderNoDUP]
-            host_List.append(host_HeaderNoDUP)
-            full_Block += self.generate_HanldeBlock(chain, tmp_Block, host_HeaderNoDUP)
-        
+
+            full_Block += self.generate_HanldeBlock(chain, tmp_Block)
 
         if self.__country != None:
             geoip_Block = r'''
@@ -122,9 +115,6 @@ class caddy_Proxy:
         for i in uri:
             format_URI = format_URI + " " + i
         for i in headers:
-            #print("header" + ' \"%s\"'%i[0] + ' \"%s\"'%i[1])
-            if i[0].lower() == "host":
-                host_Header = i[1]
             format_Headers = format_Headers + "header" + ' \"%s\"'%i[0] + ' \"%s\"'%i[1] + "\r\n\t"
         
         matcher_tmp = "{" + "\r\n\t" + format_URI + "\r\n\t" + method + "\r\n\t" + format_Headers.strip("\t") + "}"
@@ -139,9 +129,9 @@ class caddy_Proxy:
         reverse_proxy = "reverse_proxy " + matcher_Name + '\"%s\"'%c2_backend + reverse_proxy_Partly
 
         full = matcher_Full + "\r\n" + reverse_proxy + "\r\n"
-        return full, host_Header
+        return full
 
-    def generate_HanldeBlock(self, chain, proxyBlock, host_Headers):
+    def generate_HanldeBlock(self, chain, proxyBlock):
         tag = "(caddy-guard-%s)"%str(chain.strip("\n").split(":")[3])
         template_Header = r''' {
 	tls ./localhost.crt ./localhost.key
@@ -157,14 +147,9 @@ class caddy_Proxy:
         if self.__country != None:
             template_Header = template_Header.replace(r"# GEO_IMPORT","import GEOFILTER")
         
-        basic_URL = "https://%s:%s"%(self.__local, chain.strip("\n").split(":")[0])
-        listen_URL = " "
-        for i in host_Headers:
-            # Https only
-            i = "https://%s"%(i)
-            listen_URL += i + ' '
+        basic_Listen = ":%s "%chain.strip("\n").split(":")[0]
         
-        handle_Block = basic_URL + listen_URL + "{ import %s }\r\n"%tag.replace("(",'').replace(")",'')
+        handle_Block = basic_Listen + "{ import %s }\r\n"%tag.replace("(",'').replace(")",'')
 
         # For TeamServer port warden
         try:
@@ -297,7 +282,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '-allow-country', metavar="CN" ,action='store', help='Whitelist IP with country (detect with GEOIP database) '
                         'For multiple country please separated by a single space, Like: CN US')
     parser.add_argument('-xf', action='store_true', help='Using x-forwarded-for header ip address as remote ip'
-                        ',the scf must include x-forwarded-for header')
+                        ',the source request must include x-forwarded-for header')
     parser.add_argument('-o', '-out', metavar="filename" ,action='store', help='Filename you want to save as')
     
     if len(sys.argv)==1:
