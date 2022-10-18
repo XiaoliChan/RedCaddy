@@ -24,6 +24,7 @@ Generate caddyfile with c2 malleable profiles
 - Plenty of inspiration from this article: [🇬🇧 Carrying the Tortellini's golf sticks](https://aptw.tf/2021/11/25/c2-redirectors-using-caddy.html)  
 - IP Blacklists from [RedGuard's IP Blacklists](https://github.com/wikiZ/RedGuard/blob/main/data/banned_ips.go)
 - User-Agent Blacklists from [mitchellkrogza's UA blacklists](https://github.com/mitchellkrogza/nginx-ultimate-bad-bot-blocker/blob/master/_generator_lists/bad-user-agents.list)  
+- self-signed-cert.py modified from [CarbonCopy](https://github.com/paranoidninja/CarbonCopy) 
 
 ### Quick start
 - Generate self-signed certificate
@@ -34,8 +35,11 @@ Generate caddyfile with c2 malleable profiles
 - Finally, generate Caddyfile with the ugly python script.
 
 ### Step by step
-- Generate self-signed certificates from this page:  
-[How to create self-signed certificates](https://gist.github.com/cecilemuller/9492b848eb8fe46d462abeb26656c4f8)
+- Generate self-signed certificates with self-signed-cert.py :  
+`python3 cert-test.py -t [Https Server] -l 192.168.85.133`
+![image](https://user-images.githubusercontent.com/30458572/196379200-a2e080d4-86b9-4755-b560-38d2887204ff.png)
+As you can see, `*.crt`, `*.key`, `*.p12`, `*.store` are generated  
+![image](https://user-images.githubusercontent.com/30458572/196379755-ec5bf87f-fca9-4395-8e64-f568a73c5d18.png)
 
 - Build the custom caddy with specific modules (optional)  
 ```
