@@ -17,10 +17,9 @@ from OpenSSL import crypto
 from pathlib import Path
 from colorama import Fore, Back, Style
 
-
 TIMESTAMP_URL = "http://sha256timestamp.ws.symantec.com/sha256/timestamp"
 
-def CarbonCopy(host, port, alt_names):
+def CarbonCopy(host, port):
         #Fetching Details
     print("[+] Loading public key of %s in Memory..." % host)
     ogcert = ssl.get_server_certificate((host, int(port)))
@@ -48,27 +47,61 @@ def CarbonCopy(host, port, alt_names):
     print("[+] Cloning Certificate Subject")
     cert.set_subject(x509.get_subject())
 
+    extensions =[
+        crypto.X509Extension(
+            b"authorityKeyIdentifier",
+            critical=False,
+            value=b'keyid,issuer',
+            issuer=x509
+        )
+    ]
+    cert.add_extensions(extensions)
+
+    extensions =[
+        crypto.X509Extension(
+            b"basicConstraints",
+            critical=False,
+            value=b'CA:FALSE'
+        )
+    ]
+    cert.add_extensions(extensions)
+
+    extensions =[
+        crypto.X509Extension(
+            b"keyUsage",
+            critical=False,
+            value=b'digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment'
+        )
+    ]
+    cert.add_extensions(extensions)
+
     # https://stackoverflow.com/questions/49491732/pyopenssl-how-can-i-get-sansubject-alternative-names-list
     ext_count = x509.get_extension_count()
     for i in range(0, ext_count):
         ext = x509.get_extension(i)
-        ext_critical = x509.get_extension(i).get_critical()
+        #ext_critical = x509.get_extension(i).get_critical()
         ext_data = ext.__str__()
-        try:
-            if 'subjectAltName' in str(ext.get_short_name()):
-                ext_data += ", DNS:%s"%alt_names
-            
+        if 'subjectAltName' in str(ext.get_short_name()):
+            #ext_data += ", DNS:%s"%alt_names
             extensions =[
                 crypto.X509Extension(
                     ext.get_short_name(),
-                    critical=ext_critical,
+                    critical=False,
                     value=ext_data.encode('ascii')
                 )
             ]
             cert.add_extensions(extensions)
-        except:
-            pass
 
+    extensions =[
+        crypto.X509Extension(
+            b"subjectKeyIdentifier",
+            critical=False,
+            value=b'hash',
+            subject=cert
+        )
+    ]
+    cert.add_extensions(extensions)
+    
     print("[+] Cloning Certificate Issuer")
     cert.set_issuer(x509.get_issuer())
     print("[+] Cloning Certificate Registration & Expiration Dates")
@@ -112,7 +145,6 @@ if __name__ == "__main__":
 
     parser.add_argument('-t', metavar="www.google.com", action="store", help="Target domain")
     parser.add_argument('-p', metavar="443",action="store", default="443" ,help="Taget SSL port, default is 443")
-    parser.add_argument('-l', metavar="192.168.85.100" ,action='store', help='Specify machine local ip address')
 
     if len(sys.argv)==1:
         parser.print_help()
@@ -120,5 +152,4 @@ if __name__ == "__main__":
 
     options = parser.parse_args()
 
-
-    CarbonCopy(options.t, options.p, options.l)
+    CarbonCopy(options.t, options.p)
