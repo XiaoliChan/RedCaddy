@@ -43,11 +43,10 @@ As you can see, `*.crt`, `*.key`, `*.p12`, `*.store` are generated
 
 - Build the custom caddy with specific modules (optional)  
 ```
-wget https://github.com/caddyserver/xcaddy/releases/download/v0.3.1/xcaddy_0.3.1_linux_amd64.tar.gz
-tar -zxvf xcaddy_0.3.1_linux_amd64.tar.gz
-./xcaddy build \
-    --with github.com/aksdb/caddy-cgi/v2 \
-    --with github.com/porech/caddy-maxmind-geolocation
+git clone https://github.com/XiaoliChan/RedCaddy-core.git
+cd cmd/caddy
+CGO_ENABLED=0 go build
+upx --best --lzma caddy
 ```
 
 - Enable `set trust_x_forwarded_for "true";` in c2 profile  
