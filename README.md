@@ -36,10 +36,10 @@ Generate caddyfile with c2 malleable profiles
 
 ### Step by step
 - Generate self-signed certificates with self-signed-cert.py :  
-`python3 self-signed-cert.py -t [Https Server]`
-![image](https://user-images.githubusercontent.com/30458572/196379200-a2e080d4-86b9-4755-b560-38d2887204ff.png)
-As you can see, `*.crt`, `*.key`, `*.p12`, `*.store` are generated  
-![image](https://user-images.githubusercontent.com/30458572/196379755-ec5bf87f-fca9-4395-8e64-f568a73c5d18.png)
+`python3 self-signed-cert.py -t [Https Server]`  
+![image](https://user-images.githubusercontent.com/30458572/210765265-67869573-de98-4a8a-a167-11dc80fb6165.png)
+As you can see, `localhost.*` are generated  
+![image](https://user-images.githubusercontent.com/30458572/210765494-86a91d2e-8ac7-4b20-973e-e9e3e88933ce.png)
 
 - Build the custom caddy with specific modules (optional)  
 ```
