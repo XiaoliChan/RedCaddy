@@ -56,7 +56,7 @@ I use [threatexpress‘s jquery-c2.4.3.profile](https://github.com/threatexpress
 `1443:https:192.168.85.133:10002` means incomming from port *:1443 redirect to localhost http://192.168.85.133:10002 (C2 backend)  
   
   **Q: What is "warden"?**  
-  A: Warden is a whitelist function feature to protect your teamserver port, this will generate a random link with random secure strings. The user without the ability to connect to teamserver before trigged it ("warden" behind 443 means handling the link on port 443).
+  A: Warden is a whitelist function feature to protect your teamserver port, this will generate a random link with random secure strings. The user without ability connect to teamserver before trigged it ("warden" behind 443 means handling the link on port 443).
 
 - **6. Pass arguments the generator.py needed, then hit enter.**  
 `python generator.py -f jquery-c2.4.3.profile -l [Ethernet Interface IP Address] -r chains.list -c CN -o Caddyfile`
