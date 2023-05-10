@@ -77,7 +77,7 @@ subjectAltName = @alt_names
     print(Fore.RED + "[+] Copy ./cert-out/localhost.store into your cobaltstrike directory and use it (Don't forget modify your C2 malleable profile and teamserver)")
 
     with open('./cert-out/pass.txt', 'w') as f:
-        f.write("PKCS12 passphrase: {},\r\nKeystore password: {}".format(passphrase, keystore_PASS))
+        f.write("PKCS12 passphrase: {}\r\nKeystore password: {}".format(passphrase, keystore_PASS))
 
 def password_Generator(length=18):                 
     lower = string.ascii_lowercase
