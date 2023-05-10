@@ -4,16 +4,16 @@ import argparse
 import uuid
 from colorama import Fore, Back, Style
 
-from modules.redwarden_parser import MalleableParser
-from modules.logger import logger
+from lib.modules.redwarden_parser import MalleableParser
+from lib.modules.logger import logger
 
 class caddy_Proxy:
-    def __init__(self, profile, local, chains, filename, geo_country, xf):
+    def __init__(self, profile, local, chains, geo_country, xf):
         self.__profile = profile
         # Redirect destination, only https
         self.__local = local
         self.__chains = chains
-        self.__outfile = filename
+        self.__outfile = "Caddyfile"
         self.__country = geo_country
         self.__xf_switch = xf
 
@@ -71,7 +71,7 @@ class caddy_Proxy:
 (GEOFILTER) {
     @geofilter {
         not maxmind_geolocation {
-                db_path "./data/GeoLite2-Country.mmdb"
+                db_path "./lib/data/GeoLite2-Country.mmdb"
                 allow_countries REPLEACE_ME
         }
         not remote_ip 10.0.0.0/8
@@ -135,7 +135,7 @@ class caddy_Proxy:
         tag = "(caddy-guard-%s)"%str(chain.strip("\n").split(":")[3])
         template_Header = r''' {
 	# For old windows version support, like: win7
-	tls ./localhost.crt ./localhost.key {
+	tls ./cert-out/localhost.crt ./cert-out/localhost.key {
 		ciphers TLS_RSA_WITH_AES_128_CBC_SHA TLS_RSA_WITH_AES_256_CBC_SHA TLS_RSA_WITH_AES_128_GCM_SHA256 TLS_RSA_WITH_AES_256_GCM_SHA384 TLS_AES_128_GCM_SHA256 TLS_AES_256_GCM_SHA384 TLS_CHACHA20_POLY1305_SHA256 TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
     }
 	import basic-security
@@ -167,45 +167,33 @@ class caddy_Proxy:
     header "user-agent" "SecurityString"
     header "Accept-SecurityString" "REPLEACE_B"
 }
-cgi @matcher_TeamserverGuard REPLEACE_C/iptables.sh'''
-                teamserver_WardenBlock = teamserver_WardenBlock.replace("REPLEACE_A",warden_Path).replace("REPLEACE_B",securityString).replace("REPLEACE_C",os.getcwd())
+cgi @matcher_TeamserverGuard ./lib/run/iptables.sh'''
+                teamserver_WardenBlock = teamserver_WardenBlock.replace("REPLEACE_A",warden_Path).replace("REPLEACE_B",securityString)
                 proxyBlock = proxyBlock + teamserver_WardenBlock
                 
                 # Generate new iptables.sh
-                print(Fore.YELLOW + "\r\n[+] Don't foget grant execute permission to iptables.sh")
-                print(Fore.RED + "chmod 777 ./iptables.sh\r\n")
-                with open("iptables-template.sh",'r') as f:
-                    file = f.read()
-                with open("iptables.sh",'w') as f2:
-                    f2.write(file.replace("REPLEACE_HERE",chain.strip("\n").split(":")[5]))
+                with open("./lib/template/iptables-template.sh",'r') as f: file = f.read()
+                
+                if os.path.exists('./lib/run') == False: os.makedirs('./lib/run', exist_ok=True)
+
+                with open("./lib/run/iptables.sh",'w') as f2: f2.write(file.replace("REPLEACE_HERE",chain.strip("\n").split(":")[5]))
                 
                 # Teamserver warden tips
-                windows_CurlTips = r'''
-add-type @"
-    using System.Net;
-    using System.Security.Cryptography.X509Certificates;
-    public class TrustAllCertsPolicy : ICertificatePolicy {
-        public bool CheckValidationResult(
-            ServicePoint srvPoint, X509Certificate certificate,
-            WebRequest request, int certificateProblem) {
-            return true;
-        }
-    }
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
-$headers = @{
-    "user-agent" = 'SecurityString'
-    "Accept-SecurityString"  = 'REPLEACE_B'      
-}
-Invoke-WebRequest https://[REPLEACE_TO_YOUR_VPS_IP]:REPLEACE_A/REPLEACE_C -Headers $headers            
-'''
-                print(Fore.RED + "[!] Execute this command on your vps server")
-                print(Fore.YELLOW + "sudo iptables -I INPUT -p tcp --dport %s -j DROP"%chain.strip("\n").split(":")[5])
-                print(Fore.GREEN + "\r\n[1] Add whitelist ip into teamserver port warden (for linux client -- bash)")
-                print(Fore.YELLOW + 'curl https://[REPLEACE_TO_YOUR_VPS_IP]:%s/%s -H "user-agent: SecurityString" -H "Accept-SecurityString: %s" -k -vvv '%(chain.strip("\n").split(":")[0], warden_Path, securityString))
-                print(Fore.GREEN + "\r\n[2] Add whitelist ip into teamserver port warden (for windows client -- powershell)")
-                print("-"*120 + Fore.YELLOW + windows_CurlTips.replace("REPLEACE_A",chain.strip("\n").split(":")[0]).replace("REPLEACE_B",securityString).replace("REPLEACE_C",warden_Path) + Fore.GREEN + "-"*120 + Style.RESET_ALL)
+                if os.path.exists('teamserver-guard') == False: os.makedirs('teamserver-guard', exist_ok=True)
+
+                with open('./lib/template/teamserver-guard-Win.ps1', 'r') as f: windows_CurlTips = f.read()
+
+                with open('./teamserver-guard/teamserver-guard-Win.ps1', 'w') as f:
+                    f.write(windows_CurlTips.replace("REPLEACE_A",chain.strip("\n").split(":")[0]).replace("REPLEACE_B",securityString).replace("REPLEACE_C",warden_Path))
+                
+                linux_Script = 'curl https://[REPLEACE_TO_YOUR_VPS_IP]:%s/%s -H "user-agent: SecurityString" -H "Accept-SecurityString: %s" -k'%(chain.strip("\n").split(":")[0], warden_Path, securityString)
+
+                with open('./teamserver-guard/teamserver-guard-Linux.sh', 'w') as f: f.write(linux_Script)
+
+                with open('run.sh', 'w') as run_Script: run_Script.write("chmod 777 ./lib/run/iptables.sh\nsudo iptables -I INPUT -p tcp --dport %s -j DROP"%chain.strip("\n").split(":")[5])
+                #print(Fore.YELLOW + "sudo iptables -I INPUT -p tcp --dport %s -j DROP"%chain.strip("\n").split(":")[5])
+                print(Fore.GREEN + "\r\n[+] Add whitelist ip into teamserver port warden scripts in: ./teamserver-guard")
 
         except:
             pass
@@ -214,67 +202,21 @@ Invoke-WebRequest https://[REPLEACE_TO_YOUR_VPS_IP]:REPLEACE_A/REPLEACE_C -Heade
         return final
 
     def generate_Caddyfile(self, full_Block):
-        caddyguard_Header = r'''{
-        debug
-        log
-        order tls last
-        auto_https off
-        order cgi last
-    }
-
-    (basic-security) {
-        header {
-		Server "Apache/2.4.50 (Unix) OpenSSL/1.1.1d"
-		X-Robots-Tag "noindex, nofollow, nosnippet, noarchive"
-		X-Content-Type-Options "nosniff"
-		Permissions-Policy interest-cohort=()
-		Strict-Transport-Security max-age=31536000;
-		X-Content-Type-Options nosniff
-		X-Frame-Options DENY
-		Referrer-Policy no-referrer-when-downgrade
-		Cache-Control no-cache
-		X-Powered-By
-		X-Page-Speed
-		X-Varnish
-        }
-    }
-
-    (basic-blacklist) {
-        @ua_denylist {
-            import ./data/bad-user-agents.caddy
-        }
-
-        @ip_denylist {
-            import ./data/bad-ips.caddy
-        }
-
-        # UA blacklist
-        route @ua_denylist {
-            abort
-        }
-
-        # IP blacklist
-        route @ip_denylist {
-            abort
-        }
-    }
-
-    '''
+        with open('./lib/template/caddyfile-header', 'r') as f: caddyguard_Header = f.read()
     
-        with open(self.__outfile,'w+') as f:
-            f.write(caddyguard_Header + full_Block)
+        with open(self.__outfile,'w+') as f: f.write(caddyguard_Header + full_Block)
 
-    def tips(self,chains):
+    def tips(self, chains):
         print(Fore.GREEN + "[+] Formating caddyfile")
         os.system("cat %s | ./caddy fmt --overwrite"%self.__outfile)
-        print(Fore.RED + "[!] Use iptables rules to drop C2 backend port traffic and make sure it only allow incomming traffic with upstream address")
+        iptables = open("run.sh", 'a')
         for i in chains:
-            print(Fore.YELLOW + "sudo iptables -I INPUT -p tcp --dport %s -j DROP"%(i.strip("\n").split(":")[3]))
-            print("sudo iptables -I INPUT -s %s  -p tcp --dport %s -j ACCEPT"%(self.__local, i.strip("\n").split(":")[3]))
-        print(Fore.RED + "\r\n[!] Run caddy with profile")
-        print(Fore.YELLOW + "sudo ./caddy run --config %s --adapter caddyfile"%self.__outfile)
-        print("\r\n[!] Reload caddy with profile")
-        print("sudo ./caddy reload --config %s --adapter caddyfile"%self.__outfile + Style.RESET_ALL)
+            iptables.write("\nsudo iptables -I INPUT -p tcp --dport %s -j DROP"%(i.strip("\n").split(":")[3]))
+            iptables.write("\nsudo iptables -I INPUT -s %s -p tcp --dport %s -j ACCEPT"%(self.__local, i.strip("\n").split(":")[3]))
+        iptables.write("\nsudo ./caddy run --config %s --adapter caddyfile"%self.__outfile)
+        iptables.close()
+        os.chmod('./run.sh', 0o0777)
+        print(Fore.RED + "\r\n[!] Run redcaddy with: ./run.sh")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help = True, description = "Generate C2 redirection config file which is base on caddy.")
@@ -286,7 +228,6 @@ if __name__ == '__main__':
                         'For multiple country please separated by a single space, Like: CN US')
     parser.add_argument('-xf', action='store_true', help='Using x-forwarded-for header ip address as remote ip'
                         ',the source request must include x-forwarded-for header')
-    parser.add_argument('-o', '-out', metavar="filename" ,action='store', help='Filename you want to save as')
     
     if len(sys.argv)==1:
         parser.print_help()
@@ -303,9 +244,6 @@ if __name__ == '__main__':
     if options.r == None:
         logger.err("[-] Please specify port")
         sys.exit(1)
-    if options.o == None:
-        logger.err("[-] Please output output destination")
-        sys.exit(1)
 
-    executer = caddy_Proxy(options.f, options.l, options.r, options.o, options.c, options.xf)
+    executer = caddy_Proxy(options.f, options.l, options.r, options.c, options.xf)
     executer.wrapper()

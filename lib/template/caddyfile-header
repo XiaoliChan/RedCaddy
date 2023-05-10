@@ -1,0 +1,44 @@
+{
+    debug
+    log
+    order tls last
+    auto_https off
+    order cgi last
+}
+
+(basic-security) {
+    header {
+    Server "Apache/2.4.50 (Unix) OpenSSL/1.1.1d"
+    X-Robots-Tag "noindex, nofollow, nosnippet, noarchive"
+    X-Content-Type-Options "nosniff"
+    Permissions-Policy interest-cohort=()
+    Strict-Transport-Security max-age=31536000;
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy no-referrer-when-downgrade
+    Cache-Control no-cache
+    X-Powered-By
+    X-Page-Speed
+    X-Varnish
+    }
+}
+
+(basic-blacklist) {
+    @ua_denylist {
+        import ./lib/data/bad-user-agents.caddy
+    }
+
+    @ip_denylist {
+        import ./lib/data/bad-ips.caddy
+    }
+
+    # UA blacklist
+    route @ua_denylist {
+        abort
+    }
+
+    # IP blacklist
+    route @ip_denylist {
+        abort
+    }
+}
