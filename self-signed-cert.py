@@ -17,14 +17,14 @@ from colorama import Fore
 
 # Use pyOpenSSL to generate a fake cert will cause some strange issues in real world RedOps, that why I use openssl.
 def CarbonCopy(host, port):
-    if os.path.exists('cert-out') == False:
-        os.makedirs('cert-out', exist_ok=True)
+    if os.path.exists('./core/cert-out') == False:
+        os.makedirs('./core/cert-out', exist_ok=True)
 
     # Openssl command is fine :)
     issuer = '/C=BE/O=GlobalSign nv-sa/CN=GlobalSign RSA OV SSL CA 2018'
     print("[+] Creating Root CA with fake issuer: %s"%issuer)
-    os.system('openssl req -x509 -nodes -new -sha256 -days 1024 -newkey rsa:2048 -keyout ./cert-out/RootCA.key -out ./cert-out/RootCA.pem -subj "%s" >/dev/null 2>&1'%issuer)
-    os.system('openssl x509 -outform pem -in ./cert-out/RootCA.pem -out ./cert-out/RootCA.crt >/dev/null 2>&1')
+    os.system('openssl req -x509 -nodes -new -sha256 -days 1024 -newkey rsa:2048 -keyout ./core/cert-out/RootCA.key -out ./core/cert-out/RootCA.pem -subj "%s" >/dev/null 2>&1'%issuer)
+    os.system('openssl x509 -outform pem -in ./core/cert-out/RootCA.pem -out ./core/cert-out/RootCA.crt >/dev/null 2>&1')
 
     print("[+] Loading public key of %s in Memory..." % host)
     ogcert = ssl.get_server_certificate((host, int(port)))
@@ -38,7 +38,7 @@ def CarbonCopy(host, port):
     subject = x509.get_subject()
     subject_str = "".join("/{:s}={:s}".format(name.decode(), value.decode()) for name, value in subject.get_components())
     print("[+] Creating self-signed certificate")
-    os.system('openssl req -new -nodes -newkey rsa:2048 -keyout ./cert-out/localhost.key -out ./cert-out/localhost.csr -subj "%s" >/dev/null 2>&1'%subject_str)
+    os.system('openssl req -new -nodes -newkey rsa:2048 -keyout ./core/cert-out/localhost.key -out ./core/cert-out/localhost.csr -subj "%s" >/dev/null 2>&1'%subject_str)
     
     # Generate domains.ext file
     extensions_Headers = r'''authorityKeyIdentifier=keyid,issuer
@@ -57,26 +57,26 @@ subjectAltName = @alt_names
             san_list = ext_data.split(', ')
             for i in range(0, len(san_list)):
                 san += san_list[i].replace("DNS:","DNS.%s = ")%(i+1) + "\n"
-    with open("./cert-out/domains.ext",'w') as f:
+    with open("./core/cert-out/domains.ext",'w') as f:
         f.write(extensions_Headers + san)
         f.close()
     
-    os.system('openssl x509 -req -sha256 -days 1024 -in ./cert-out/localhost.csr -CA ./cert-out/RootCA.pem -CAkey ./cert-out/RootCA.key -CAcreateserial -extfile ./cert-out/domains.ext -out ./cert-out/localhost.crt >/dev/null 2>&1')
+    os.system('openssl x509 -req -sha256 -days 1024 -in ./core/cert-out/localhost.csr -CA ./core/cert-out/RootCA.pem -CAkey ./core/cert-out/RootCA.key -CAcreateserial -extfile ./core/cert-out/domains.ext -out ./core/cert-out/localhost.crt >/dev/null 2>&1')
 
     print("[+] Creating P12 certificate")
     passphrase = uuid.uuid4().hex
     print(Fore.RED + "[+] PKCS12 passphrase: %s"%passphrase + Fore.RESET)
-    os.system('openssl pkcs12 -export -in ./cert-out/localhost.crt -inkey ./cert-out/localhost.key -out ./cert-out/localhost.p12 -name alias -passout pass:%s'%passphrase)
+    os.system('openssl pkcs12 -export -in ./core/cert-out/localhost.crt -inkey ./core/cert-out/localhost.key -out ./core/cert-out/localhost.p12 -name alias -passout pass:%s'%passphrase)
 
     print("[+] Creating keystore file")
     
     keystore_PASS = password_Generator()
     print(Fore.RED + "[+] Keystore password: %s"%keystore_PASS + Fore.RESET)
-    os.system("keytool -importkeystore -deststorepass %s -destkeypass %s -destkeystore ./cert-out/localhost.store -srckeystore ./cert-out/localhost.p12 -srcstoretype PKCS12 -srcstorepass %s >/dev/null 2>&1"%(keystore_PASS, keystore_PASS, passphrase))
+    os.system("keytool -importkeystore -deststorepass %s -destkeypass %s -destkeystore ./core/cert-out/localhost.store -srckeystore ./core/cert-out/localhost.p12 -srcstoretype PKCS12 -srcstorepass %s >/dev/null 2>&1"%(keystore_PASS, keystore_PASS, passphrase))
 
-    print(Fore.RED + "[+] Copy ./cert-out/localhost.store into your cobaltstrike directory and use it (Don't forget modify your C2 malleable profile and teamserver)")
+    print(Fore.RED + "[+] Copy ./core/cert-out/localhost.store into your cobaltstrike directory and use it (Don't forget modify your C2 malleable profile and teamserver)")
 
-    with open('./cert-out/pass.txt', 'w') as f:
+    with open('./core/cert-out/pass.txt', 'w') as f:
         f.write("PKCS12 passphrase: {}\r\nKeystore password: {}".format(passphrase, keystore_PASS))
 
 def password_Generator(length=18):                 

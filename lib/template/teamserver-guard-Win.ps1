@@ -13,6 +13,6 @@ add-type @"
 
 $headers = @{
     "user-agent" = 'SecurityString'
-    "Accept-SecurityString"  = 'REPLEACE_B'      
+    "Accept-SecurityString"  = 'REPLACE_SECURITY_STRINGS'      
 }
-Invoke-WebRequest https://[REPLEACE_TO_YOUR_VPS_IP]:REPLEACE_A/REPLEACE_C -Headers $headers
+Invoke-WebRequest https://REPLACE_TO_VPS_IP:REPLACE_PORT/REPLACE_WARDEN_PATH -Headers $headers

@@ -37,9 +37,9 @@ Generate caddyfile with c2 malleable profiles
 ### Step by step
 - **1. Generate self-signed certificates with "self-signed-cert.py"** :  
 `python3 self-signed-cert.py -t [Https Server]`  
-![image](https://github.com/XiaoliChan/RedCaddy/assets/30458572/bb733570-0309-48e7-960f-393ceef2a759)
-As you can see, `localhost.*` are generated in `cert-out` directory  
-![image](https://github.com/XiaoliChan/RedCaddy/assets/30458572/ef08e36d-3adc-4b24-a0d6-3e83f8230e83)
+![image](https://user-images.githubusercontent.com/30458572/210765265-67869573-de98-4a8a-a167-11dc80fb6165.png)
+As you can see, `localhost.*` are generated  
+![image](https://user-images.githubusercontent.com/30458572/210765494-86a91d2e-8ac7-4b20-973e-e9e3e88933ce.png)
 
 - **2. Enable `set trust_x_forwarded_for "true";` in C2 malleable profile**  
 ![image](https://user-images.githubusercontent.com/30458572/196095882-c60f306c-b11d-4642-af0c-86779200b3d3.png)
@@ -52,24 +52,26 @@ As you can see, `localhost.*` are generated in `cert-out` directory
 I use [threatexpress‘s jquery-c2.4.3.profile](https://github.com/threatexpress/malleable-c2/blob/master/jquery-c2.4.3.profile) as demonstrate  
 ![image](https://user-images.githubusercontent.com/30458572/195805856-bb7e5352-6227-42df-92da-7682511cc7c1.png)
 
-- **5. Edit redirection rules in "forward-chains.list"**  
+- **5. Edit redirection rules in "chains.list"**  
 `1443:https:192.168.85.133:10002` means incomming from port *:1443 redirect to localhost http://192.168.85.133:10002 (C2 backend)  
   
   **Q: What is "warden"?**  
   A: Warden is a whitelist function feature to protect your teamserver port, this will generate a random link with random secure strings. The user without ability connect to teamserver before trigged it ("warden" behind 443 means handling the link on port 443).
 
 - **6. Pass arguments the generator.py needed, then hit enter.**  
-`python generator.py -f jquery-c2.4.3.profile -l [Ethernet Interface IP Address] -r forward-chains.list -c CN`
-![image](https://github.com/XiaoliChan/RedCaddy/assets/30458572/6b99c849-7b76-48fc-b214-f309c917cb52)
+`python generator.py -f jquery-c2.4.3.profile -l [Ethernet Interface IP Address] -r chains.list -c CN -o Caddyfile`
+![image](https://user-images.githubusercontent.com/30458572/195813570-bb067849-e606-4a8f-b2e6-595ff0321aa0.png)
 
 - **7. Finally, run caddy with caddyfile just generated :)**  
-`./run.sh`
-![image](https://github.com/XiaoliChan/RedCaddy/assets/30458572/05a54f72-2d71-47d7-9eb4-2792ee20d45a)
+`sudo ./caddy run --config Caddyfile --adapter caddyfile`
+![image](https://user-images.githubusercontent.com/30458572/195814646-fb301054-877c-4e72-b5c2-97bfa2d5f818.png)
 
 - **8. Optional: Build the custom caddy with specific modules**  
 ```
 git clone https://github.com/XiaoliChan/RedCaddy-core.git
 cd cmd/caddy
+go get github.com/aksdb/caddy-cgi/v2
+go get github.com/porech/caddy-maxmind-geolocation
 CGO_ENABLED=0 go build
 upx --best --lzma caddy
 ```

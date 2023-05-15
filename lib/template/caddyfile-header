@@ -25,11 +25,11 @@
 
 (basic-blacklist) {
     @ua_denylist {
-        import ./lib/data/bad-user-agents.caddy
+        import ../lib/data/bad-user-agents.caddy
     }
 
     @ip_denylist {
-        import ./lib/data/bad-ips.caddy
+        import ../lib/data/bad-ips.caddy
     }
 
     # UA blacklist
