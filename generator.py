@@ -44,13 +44,14 @@ class caddy_Proxy:
             chains = f.readlines()
 
         # for white list mode:
-        iptables_Ports = ""
         for i in chains:
-            if i.strip("\n").split(":")[2] == "warden":
-                pass
-            else:
-                iptables_Ports += (i.strip("\n").split(":")[0]) + ","
-        iptables_Ports = iptables_Ports.rstrip(',')
+            if "warden" in i:
+                if i.strip("\n").split(":").index("warden") == 4:
+                    print("[+] Blacklist mode detection")
+                    iptables_Ports = self.iptables_Ports(chains)
+                elif i.strip("\n").split(":").index("warden") == 2:
+                    print("[+] whitelist mode detection.")
+                    iptables_Ports = self.iptables_Ports(chains, True)
 
         for chain in chains:
             # For whitelist mode
@@ -186,6 +187,23 @@ class caddy_Proxy:
         with open('./lib/template/caddyfile-header', 'r') as f: caddyguard_Header = f.read()
         with open(self.__outfile,'w+') as f: f.write(caddyguard_Header + full_Block)
 
+    def iptables_Ports(self, chains, whitelist=False):
+        iptables_Ports = ""
+        if whitelist == False:
+            for i in chains:
+                iptables_Ports += (i.strip("\n").split(":")[3]) + ","
+            iptables_Ports = iptables_Ports.rstrip(',')
+            return iptables_Ports
+        else:
+            for i in chains:
+                if i.strip("\n").split(":")[2] == "warden":
+                    pass
+                else:
+                    iptables_Ports += (i.strip("\n").split(":")[3]) + ","
+                    iptables_Ports += (i.strip("\n").split(":")[0]) + ","
+            iptables_Ports = iptables_Ports.rstrip(',')
+            return iptables_Ports
+
     def tips(self, chains, iptables_Ports):
         print(Fore.GREEN + "[+] Formating caddyfile")
         os.system("./core/caddy fmt --overwrite %s"%self.__outfile)
@@ -197,6 +215,11 @@ class caddy_Proxy:
                 iptables.write("\nsudo iptables -I INPUT -s %s -p tcp --dport %s -j ACCEPT"%(i.strip("\n").split(":")[2], i.strip("\n").split(":")[3]))
         else:
             iptables.write("\nsudo iptables -I INPUT -p tcp -m multiport --dports %s -j DROP" %iptables_Ports)
+            for i in chains:
+                if i.strip("\n").split(":")[2] == "warden":
+                    pass
+                else:
+                    iptables.write("\nsudo iptables -I INPUT -s %s -p tcp --dport %s -j ACCEPT"%(i.strip("\n").split(":")[2], i.strip("\n").split(":")[3]))
         iptables.write("\nsudo ./caddy run --config Caddyfile --adapter caddyfile")
         iptables.close()
         os.chmod('./run.sh', 0o0777)
