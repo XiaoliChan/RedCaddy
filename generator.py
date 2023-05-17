@@ -51,14 +51,14 @@ class caddy_Proxy:
                     iptables_Ports = self.iptables_Ports(chains)
                 elif i.strip("\n").split(":").index("warden") == 2:
                     print("[+] whitelist mode detection.")
-                    iptables_Ports = self.iptables_Ports(chains, True)
+                    iptables_Ports, iptables_Ports_ = self.iptables_Ports(chains, True)
 
         for chain in chains:
             # For whitelist mode
             warden_Block = ""
             if chain.strip("\n").split(":")[2] == "warden":
                 #invoke_Method = warden(chain, proxyBlock, self.vps_ip)
-                proxyBlock = self.invoke_Method.C2Whitelist_block(chain, iptables_Ports, self.bot_token)
+                proxyBlock = self.invoke_Method.C2Whitelist_block(chain, iptables_Ports_, self.bot_token)
                 proxyBlock_Warden = self.invoke_Method.teamserverPort_Warden(chain, proxyBlock, self.whitelist_Mode)
                 warden_Block = self.generate_HanldeBlock(chain, proxyBlock_Warden)
             else:
@@ -189,6 +189,7 @@ class caddy_Proxy:
 
     def iptables_Ports(self, chains, whitelist=False):
         iptables_Ports = ""
+        iptables_Ports_ = ""
         if whitelist == False:
             for i in chains:
                 iptables_Ports += (i.strip("\n").split(":")[3]) + ","
@@ -201,8 +202,11 @@ class caddy_Proxy:
                 else:
                     iptables_Ports += (i.strip("\n").split(":")[3]) + ","
                     iptables_Ports += (i.strip("\n").split(":")[0]) + ","
+                    # Without c2 backend port
+                    iptables_Ports_ += (i.strip("\n").split(":")[0]) + ","
             iptables_Ports = iptables_Ports.rstrip(',')
-            return iptables_Ports
+            iptables_Ports_ = iptables_Ports_.rstrip(',')
+            return iptables_Ports, iptables_Ports_
 
     def tips(self, chains, iptables_Ports):
         print(Fore.GREEN + "[+] Formating caddyfile")
