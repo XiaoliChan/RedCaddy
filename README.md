@@ -72,7 +72,7 @@ I use [threatexpress‘s jquery-c2.4.3.profile](https://github.com/threatexpress
 git clone https://github.com/XiaoliChan/RedCaddy-core.git
 cd cmd/caddy
 go get github.com/aksdb/caddy-cgi/v2
-go get github.com/porech/caddy-maxmind-geolocation
+go get github.com/XiaoliChan/caddy-maxmind-geolocation@self
 CGO_ENABLED=0 go build
 upx --best --lzma caddy
 ```
