@@ -1,6 +1,8 @@
 {
     debug
-    log
+    log {                                                                                                                                                                                           
+        output stderr                                                                                                                                                                           
+    }
     order tls last
     auto_https off
     order cgi last

@@ -92,6 +92,7 @@ class caddy_Proxy:
 (GEOFILTER) {
     @geofilter {
         not maxmind_geolocation {
+                #forwarded_as_sources_ip
                 db_path "../lib/data/GeoLite2-Country.mmdb"
                 allow_countries REPLACE_ME
         }
